@@ -1,13 +1,20 @@
 # Anny-Fit 跨环境复现安装指南（给 AI/自动化助手）
 
-目标：在新环境中复现当前机器上的安装状态，包括依赖、子模块补丁、已整理 checkpoints 的拷贝和最终验证。
+本文面向“目标环境”中的 AI/自动化助手。目标是在目标环境中复现 Anny-Fit 的可运行安装状态，包括依赖、子模块补丁、从源环境复制已整理 checkpoints，以及最终验证。
 
-当前环境已验证通过：
+术语：
 
-- Conda 环境：`annyfit`
-- PyTorch：CUDA build 可用
-- GPU：RTX 3090 / RTX 2070 SUPER 在宿主环境下可见
-- Anny-Fit wrapper 能成功读取 checkpoints 并初始化
+- 源环境：已经完成安装、并且拥有完整 `checkpoints/` 目录的机器或路径。
+- 目标环境：当前正在执行本指南、准备安装 Anny-Fit 的机器。
+
+源环境参考记录：
+
+- Conda 环境名：`annyfit`
+- 源环境曾验证 PyTorch CUDA build 可用。
+- 源环境 GPU 是 RTX 3090 / RTX 2070 SUPER；这只是源环境记录，不是目标环境要求。
+- 源环境中 Anny-Fit wrapper 已能成功读取 checkpoints 并初始化。
+
+目标环境不要求 GPU 型号与源环境一致。目标环境只需要满足项目运行所需的 CUDA/PyTorch/GPU 驱动条件；如果只做 CPU 级导入验证，也可以没有可见 GPU。
 
 注意：不要把 `checkpoints/` 下的权重提交到 Git。项目 `.gitignore` 已忽略 `checkpoints/`。
 
@@ -59,7 +66,7 @@ if 'expert' in key:
 bash scripts/install.sh
 ```
 
-本机安装时遇到过的兼容问题和处理方式：
+源环境安装时遇到过的兼容问题和处理方式；目标环境中如果遇到同类错误，可按以下方式处理：
 
 1. Anaconda TOS 未接受时，按 conda 提示接受对应 channel 的 TOS 后重跑。
 2. `mmcv` / `albumentations` 构建遇到 `pkg_resources` / setuptools 问题时：
@@ -79,9 +86,9 @@ bash scripts/install.sh
 
 ## 4. 准备已整理好的 checkpoints 目录（推荐）
 
-推荐不要在新环境重新下载或解压权重。直接把当前机器已经整理好的 `checkpoints/` 目录复制到新环境，然后放到新 repo 的根目录下。
+推荐不要在目标环境重新下载或解压权重。目标环境应直接从源环境复制已经整理好的 `checkpoints/` 目录，并放到目标环境 repo 的根目录下。
 
-当前机器需要保留/拷贝的目录结构是：
+源环境需要提供的目录结构是：
 
 ```text
 checkpoints/
@@ -103,30 +110,30 @@ checkpoints/
         └── downsample_mat.pkl
 ```
 
-在新环境中，AI 应先询问用户已整理好的 repo/checkpoints 在哪里，并使用以下提示语：
+在目标环境中，AI 应先询问用户源环境的 repo/checkpoints 在哪里，并使用以下提示语：
 
 ```text
 如果是另一台机器，请给出诸如 ip地址:/path_to_repo 或 user@ip地址:/path_to_repo 的格式；
 如果是本机，请给出诸如 /path_to_repo 的格式。
 ```
 
-脚本同时支持 repo 根目录和 checkpoints 目录。例如：
+复制脚本同时支持源环境 repo 根目录和源环境 checkpoints 目录。例如：
 
 ```bash
-# 本机：传 repo 根目录
+# 源环境与目标环境在同一台机器：传源 repo 根目录
 bash ai_install_guide/scripts/copy_prepared_checkpoints.sh /path_to_repo
 
-# 本机：直接传 checkpoints 目录
+# 源环境与目标环境在同一台机器：直接传源 checkpoints 目录
 bash ai_install_guide/scripts/copy_prepared_checkpoints.sh /path_to_repo/checkpoints
 
-# 局域网另一台机器：传 repo 根目录
+# 源环境在局域网另一台机器：传源 repo 根目录
 bash ai_install_guide/scripts/copy_prepared_checkpoints.sh 192.168.x.xxx:/path_to_repo
 
-# 局域网另一台机器：带用户名
+# 源环境在局域网另一台机器：带用户名
 bash ai_install_guide/scripts/copy_prepared_checkpoints.sh user@192.168.x.xxx:/path_to_repo
 ```
 
-如果已整理好的 checkpoints 位于 `/path/to/prepared/checkpoints`，运行：
+如果源环境已整理好的 checkpoints 位于 `/path/to/prepared/checkpoints`，运行：
 
 ```bash
 bash ai_install_guide/scripts/copy_prepared_checkpoints.sh /path/to/prepared/checkpoints
@@ -134,7 +141,7 @@ bash ai_install_guide/scripts/copy_prepared_checkpoints.sh /path/to/prepared/che
 
 这一步只复制文件，不下载、不解压、不重新生成 ViTPose 权重。远程路径会使用 `ssh` 校验文件，并优先使用 `rsync -e ssh` 复制；没有 `rsync` 时回退到 `scp -r`。
 
-如果你是把 `checkpoints/` 目录直接拷贝到了 repo 根目录，也可以跳过这个脚本，直接进入验证步骤。
+如果用户已经把 `checkpoints/` 目录直接拷贝到了目标环境 repo 根目录，也可以跳过这个脚本，直接进入验证步骤。
 
 ## 5. 从原始下载文件整理 checkpoints（备用，不推荐重复执行）
 
@@ -158,7 +165,7 @@ train-eval-utils.zip
 vitpose _huge.pth
 ```
 
-当前这台机器已经完成了这一步；跨环境复现时优先复制整理后的 `checkpoints/`。
+源环境已经完成了这一步；跨环境复现时优先复制源环境中整理后的 `checkpoints/`。
 
 ## 6. 验证安装
 
@@ -173,7 +180,7 @@ core_imports_ok
 anny_wrapper_ok (17, 6890) (6890, 10475) (138, 6890)
 ```
 
-如果在默认沙箱中运行，`torch.cuda.is_available()` 可能是 `False`；在宿主环境运行时应能看到 GPU。
+如果在默认沙箱中运行，`torch.cuda.is_available()` 可能是 `False`；在宿主环境运行时应按目标环境实际硬件显示 GPU。目标环境 GPU 型号不需要与源环境一致。
 
 ## 7. 使用方式
 
