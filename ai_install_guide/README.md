@@ -103,13 +103,36 @@ checkpoints/
         └── downsample_mat.pkl
 ```
 
-在新环境中，如果已整理好的 checkpoints 位于 `/path/to/prepared/checkpoints`，运行：
+在新环境中，AI 应先询问用户已整理好的 repo/checkpoints 在哪里，并使用以下提示语：
+
+```text
+如果是另一台机器，请给出诸如 ip地址:/path_to_repo 或 user@ip地址:/path_to_repo 的格式；
+如果是本机，请给出诸如 /path_to_repo 的格式。
+```
+
+脚本同时支持 repo 根目录和 checkpoints 目录。例如：
+
+```bash
+# 本机：传 repo 根目录
+bash ai_install_guide/scripts/copy_prepared_checkpoints.sh /path_to_repo
+
+# 本机：直接传 checkpoints 目录
+bash ai_install_guide/scripts/copy_prepared_checkpoints.sh /path_to_repo/checkpoints
+
+# 局域网另一台机器：传 repo 根目录
+bash ai_install_guide/scripts/copy_prepared_checkpoints.sh 192.168.x.xxx:/path_to_repo
+
+# 局域网另一台机器：带用户名
+bash ai_install_guide/scripts/copy_prepared_checkpoints.sh user@192.168.x.xxx:/path_to_repo
+```
+
+如果已整理好的 checkpoints 位于 `/path/to/prepared/checkpoints`，运行：
 
 ```bash
 bash ai_install_guide/scripts/copy_prepared_checkpoints.sh /path/to/prepared/checkpoints
 ```
 
-这一步只复制文件，不下载、不解压、不重新生成 ViTPose 权重。
+这一步只复制文件，不下载、不解压、不重新生成 ViTPose 权重。远程路径会使用 `ssh` 校验文件，并优先使用 `rsync -e ssh` 复制；没有 `rsync` 时回退到 `scp -r`。
 
 如果你是把 `checkpoints/` 目录直接拷贝到了 repo 根目录，也可以跳过这个脚本，直接进入验证步骤。
 
