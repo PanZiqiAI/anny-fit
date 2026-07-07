@@ -1,6 +1,6 @@
 # Anny-Fit 跨环境复现安装指南（给 AI/自动化助手）
 
-目标：在新环境中复现当前机器上的安装状态，包括依赖、子模块补丁、公开权重、手动下载权重整理和最终验证。
+目标：在新环境中复现当前机器上的安装状态，包括依赖、子模块补丁、已整理 checkpoints 的拷贝和最终验证。
 
 当前环境已验证通过：
 
@@ -77,9 +77,53 @@ bash scripts/install.sh
 
 4. 默认沙箱可能看不到 `/dev/nvidia*`；GPU 验证需要在宿主环境执行。
 
-## 4. 准备手动下载文件
+## 4. 准备已整理好的 checkpoints 目录（推荐）
 
-把以下文件放到一个目录里，默认脚本会先找 `~/下载`，再找 `~/Downloads`：
+推荐不要在新环境重新下载或解压权重。直接把当前机器已经整理好的 `checkpoints/` 目录复制到新环境，然后放到新 repo 的根目录下。
+
+当前机器需要保留/拷贝的目录结构是：
+
+```text
+checkpoints/
+├── multiHMR_672_L_anny.pt
+├── sam2.1_hiera_large.pt
+├── hrnet_w48_coco_wholebody_384x288_dark-f5726563_20200918.pth
+├── hrnetv2_w18_coco_wholebody_hand_256x256_dark-a9228c9c_20210908.pth
+├── cam_model_cleaned.ckpt
+├── camerahmr_checkpoint_cleaned.ckpt
+├── densekp.ckpt
+├── model_final_f05665.pkl
+├── vitpose_backbone.pth
+├── vitpose_huge_wholebody.pth
+└── body_models/
+    ├── SMPL_NEUTRAL.pkl
+    └── joint_regressors/
+        ├── J_regressor_coco_hip_smpl.npy
+        ├── smplx2smpl.pkl
+        └── downsample_mat.pkl
+```
+
+在新环境中，如果已整理好的 checkpoints 位于 `/path/to/prepared/checkpoints`，运行：
+
+```bash
+bash ai_install_guide/scripts/copy_prepared_checkpoints.sh /path/to/prepared/checkpoints
+```
+
+这一步只复制文件，不下载、不解压、不重新生成 ViTPose 权重。
+
+如果你是把 `checkpoints/` 目录直接拷贝到了 repo 根目录，也可以跳过这个脚本，直接进入验证步骤。
+
+## 5. 从原始下载文件整理 checkpoints（备用，不推荐重复执行）
+
+只有在没有已整理好的 `checkpoints/` 目录时，才使用这个备用脚本：
+
+```bash
+bash ai_install_guide/scripts/install_from_manual_downloads.sh /path/to/downloaded/files
+```
+
+该脚本会从原始下载文件中抽取/生成所需权重，包括从 `train-eval-utils.zip` 抽取文件、从 `vitpose _huge.pth` 生成 `vitpose_huge_wholebody.pth`。如果你已经有完整 `checkpoints/` 目录，不要使用它。
+
+备用脚本需要的原始文件：
 
 ```text
 cam_model_cleaned.ckpt
@@ -91,34 +135,7 @@ train-eval-utils.zip
 vitpose _huge.pth
 ```
 
-说明：
-
-- `vitpose _huge.pth` 是从 ViTPose OneDrive 下载的原始大模型。
-- `train-eval-utils.zip` 来自 CameraHMR。
-- 当前下载到的 `train-eval-utils.zip` 没有 README 中提到的 `J_regressor_coco_hip_smpl.npy`，但包含 `J_regressor_h36m.npy`，本指南脚本会把它作为 17 点 regressor 放到项目期望路径。
-
-## 5. 整理 checkpoints
-
-运行：
-
-```bash
-bash ai_install_guide/scripts/install_from_manual_downloads.sh
-```
-
-如果手动下载文件不在默认目录，传入路径：
-
-```bash
-bash ai_install_guide/scripts/install_from_manual_downloads.sh /path/to/downloaded/files
-```
-
-该脚本会：
-
-- 下载公开权重到 `checkpoints/`
-- 复制 CameraHMR / SMPL 权重
-- 从 `train-eval-utils.zip` 抽取 `vitpose_backbone.pth`
-- 抽取 `smplx2smpl.pkl`、`downsample_mat.pkl`
-- 优先抽取 `J_regressor_coco_hip_smpl.npy`；若不存在则用 `J_regressor_h36m.npy` 作为兼容替代
-- 从 `vitpose _huge.pth` 生成 `checkpoints/vitpose_huge_wholebody.pth`
+当前这台机器已经完成了这一步；跨环境复现时优先复制整理后的 `checkpoints/`。
 
 ## 6. 验证安装
 
