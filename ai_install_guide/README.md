@@ -1,6 +1,6 @@
 # Anny-Fit 跨环境复现安装指南（给 AI/自动化助手）
 
-本文面向“目标环境”中的 AI/自动化助手。目标是在目标环境中复现 Anny-Fit 的可运行安装状态，包括依赖、指向 fork 的子模块、从源环境复制已整理 checkpoints，以及最终验证。
+本文面向“目标环境”中的 AI/自动化助手。目标是在目标环境中复现 Anny-Fit 的可运行安装状态，包括依赖、按当前仓库记录初始化子模块、从源环境复制已整理 checkpoints，以及最终验证。
 
 术语：
 
@@ -10,9 +10,8 @@
 源环境参考记录：
 
 - Conda 环境名：`annyfit`
-- 源环境曾验证 PyTorch CUDA build 可用。
-- 源环境 GPU 是 RTX 3090 / RTX 2070 SUPER；这只是源环境记录，不是目标环境要求。
-- 源环境中 Anny-Fit wrapper 已能成功读取 checkpoints 并初始化。
+- 源环境应已验证 PyTorch CUDA build 可用，或至少完成 CPU 级导入验证。
+- 源环境中 Anny-Fit wrapper 应能成功读取 checkpoints 并初始化。
 
 目标环境不要求 GPU 型号与源环境一致。目标环境只需要满足项目运行所需的 CUDA/PyTorch/GPU 驱动条件；如果只做 CPU 级导入验证，也可以没有可见 GPU。
 
@@ -39,26 +38,29 @@ git submodule sync --recursive
 git submodule update --init --recursive
 ```
 
-## 2. 子模块 fork 与固定 commit
+## 2. 子模块来源与固定 commit
 
-当前 repo 已经在 `.gitmodules` 中把需要本项目兼容改动的子模块指向 `PanZiqiAI` fork，并固定到顶层 repo 记录的 commit。目标环境不需要再手动修改子模块。
+当前 repo 通过 `.gitmodules` 记录子模块 URL，并通过顶层 Git commit 固定每个子模块应 checkout 的具体 commit。目标环境不需要手动修改子模块，也不应依赖文档中写死的 branch 名。
 
-```text
-submodules/ViTPose   -> https://github.com/PanZiqiAI/ViTPose.git, branch dev-260706
-submodules/multi-hmr -> https://github.com/PanZiqiAI/multi-hmr.git, branch dev-260706
-```
-
-安装助手应确认子模块状态：
+安装助手应从当前仓库读取子模块来源：
 
 ```bash
-git submodule status submodules/ViTPose submodules/multi-hmr
+git config -f .gitmodules --get-regexp '^submodule\..*\.url$'
 ```
 
-如果这两个子模块仍指向官方上游 URL，说明本地配置没有同步，执行：
+确认子模块不是本地临时脏改动，而是顶层 repo 已固定的子模块 commit：
 
 ```bash
-git submodule sync submodules/ViTPose submodules/multi-hmr
-git submodule update --init --recursive submodules/ViTPose submodules/multi-hmr
+git submodule status --recursive
+```
+
+输出中的 commit hash 才是跨环境复现依据。`.gitmodules` 中如果存在 `branch = ...`，它只是维护分支提示，主要影响 `git submodule update --remote`，不是普通安装复现的依据。
+
+如果这是旧 clone，或者子模块 URL 与当前 `.gitmodules` 不一致，执行：
+
+```bash
+git submodule sync --recursive
+git submodule update --init --recursive
 ```
 
 ## 3. 安装 Conda 环境与依赖
@@ -168,7 +170,7 @@ train-eval-utils.zip
 vitpose _huge.pth
 ```
 
-源环境已经完成了这一步；跨环境复现时优先复制源环境中整理后的 `checkpoints/`。
+如果源环境已经完成了这一步，跨环境复现时优先复制源环境中整理后的 `checkpoints/`。
 
 ## 6. 验证安装
 
@@ -208,4 +210,5 @@ conda run -n annyfit python <your_command.py>
 - 不要 `git add checkpoints/`。
 - 不要在目标环境临时修改子模块来完成安装；需要长期保留的子模块改动应提交到对应 fork，并由顶层 repo 记录新的 submodule commit。
 - 顶层 repo 中的 `git add submodules/<name>` 只更新子模块指针，不会把子模块内部文件 diff 直接提交进顶层 repo。
-- 本指南不再提供 patch 流程；跨环境复现应依赖 fork 中已提交的子模块 commit。
+- 安装复现以顶层 repo 记录的 submodule commit 为准，不以 README 中的分支名、当前本地分支名或远端默认分支为准。
+- 跨环境复现应依赖 fork 中已提交的子模块 commit。
