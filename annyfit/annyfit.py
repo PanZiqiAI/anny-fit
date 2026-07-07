@@ -37,8 +37,14 @@ class Annyfit:
         self.device = device
         self.logger_enabled = self.cfg.get('logger_enabled', True)
         self.img_prefixes = [f.split('.')[0] for f in os.listdir(cfg.data.dataset_folder)]
-        anny_model = anny.create_fullbody_model(remove_unattached_vertices=False,
-                                                local_changes=True, default_pose_parameterization='root_relative_world')
+        try:
+            anny_model = anny.create_fullbody_model(remove_unattached_vertices=False,
+                                                    local_changes=True,
+                                                    pose_parameterization='local-bone-world')
+        except TypeError:
+            anny_model = anny.create_fullbody_model(remove_unattached_vertices=False,
+                                                    local_changes=True,
+                                                    default_pose_parameterization='root_relative_world')
         self.bone_labels = anny_model.bone_labels
         self.shape_labels = anny_model.phenotype_labels
 
