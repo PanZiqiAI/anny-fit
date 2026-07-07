@@ -41,7 +41,7 @@ git submodule update --init --recursive
 
 ## 2. 子模块 fork 与固定 commit
 
-当前 repo 已经在 `.gitmodules` 中把需要本项目兼容改动的子模块指向 `PanZiqiAI` fork，并固定到顶层 repo 记录的 commit。目标环境不需要再手动应用 patch。
+当前 repo 已经在 `.gitmodules` 中把需要本项目兼容改动的子模块指向 `PanZiqiAI` fork，并固定到顶层 repo 记录的 commit。目标环境不需要再手动修改子模块。
 
 ```text
 submodules/ViTPose   -> https://github.com/PanZiqiAI/ViTPose.git, branch dev-260706
@@ -208,4 +208,4 @@ conda run -n annyfit python <your_command.py>
 - 不要 `git add checkpoints/`。
 - 不要在目标环境临时修改子模块来完成安装；需要长期保留的子模块改动应提交到对应 fork，并由顶层 repo 记录新的 submodule commit。
 - 顶层 repo 中的 `git add submodules/<name>` 只更新子模块指针，不会把子模块内部文件 diff 直接提交进顶层 repo。
-- 旧版 patch 流程已废弃；`ai_install_guide/patches/` 和 `apply_submodule_patches.sh` 只作为历史参考，不应在正常安装流程中执行。
+- 本指南不再提供 patch 流程；跨环境复现应依赖 fork 中已提交的子模块 commit。
