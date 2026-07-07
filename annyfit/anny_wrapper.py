@@ -55,11 +55,18 @@ class Anny(torch.nn.Module):
         super().__init__()
         self.dtype = dtype
         self.batch_size = batch_size
-        self.model = anny.create_fullbody_model(remove_unattached_vertices=False,
-                                                local_changes=True,
-                                                default_pose_parameterization='root_relative_world',
-                                                topology='smplx',
-                                                ).to(dtype=self.dtype)
+        try:
+            self.model = anny.create_fullbody_model(remove_unattached_vertices=False,
+                                                    local_changes=True,
+                                                    pose_parameterization='local-bone-world',
+                                                    topology='smplx',
+                                                    ).to(dtype=self.dtype)
+        except TypeError:
+            self.model = anny.create_fullbody_model(remove_unattached_vertices=False,
+                                                    local_changes=True,
+                                                    default_pose_parameterization='root_relative_world',
+                                                    topology='smplx',
+                                                    ).to(dtype=self.dtype)
         self.model.set_skinning_method(skinning_method)
         self.faces = self.model.get_triangular_faces()
         
