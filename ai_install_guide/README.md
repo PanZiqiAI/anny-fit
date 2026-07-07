@@ -1,6 +1,6 @@
 # Anny-Fit 跨环境复现安装指南（给 AI/自动化助手）
 
-本文面向“目标环境”中的 AI/自动化助手。目标是在目标环境中复现 Anny-Fit 的可运行安装状态，包括依赖、子模块补丁、从源环境复制已整理 checkpoints，以及最终验证。
+本文面向“目标环境”中的 AI/自动化助手。目标是在目标环境中复现 Anny-Fit 的可运行安装状态，包括依赖、指向 fork 的子模块、从源环境复制已整理 checkpoints，以及最终验证。
 
 术语：
 
@@ -32,30 +32,33 @@ git submodule update --init --recursive
 git submodule update --init --recursive
 ```
 
-## 2. 应用子模块补丁
-
-当前顶层 repo 不能直接提交 ViTPose 子模块内部文件 diff，因此这里用顶层 patch 复现该改动。
+如果这是一个已经存在的旧 clone，并且 `.gitmodules` 最近被更新过，先同步子模块 URL：
 
 ```bash
-bash ai_install_guide/scripts/apply_submodule_patches.sh
+git submodule sync --recursive
+git submodule update --init --recursive
 ```
 
-该脚本会修复：
+## 2. 子模块 fork 与固定 commit
+
+当前 repo 已经在 `.gitmodules` 中把需要本项目兼容改动的子模块指向 `PanZiqiAI` fork，并固定到顶层 repo 记录的 commit。目标环境不需要再手动应用 patch。
 
 ```text
-submodules/ViTPose/tools/model_split.py
+submodules/ViTPose   -> https://github.com/PanZiqiAI/ViTPose.git, branch dev-260706
+submodules/multi-hmr -> https://github.com/PanZiqiAI/multi-hmr.git, branch dev-260706
 ```
 
-核心改动是把错误的：
+安装助手应确认子模块状态：
 
-```python
-if 'expert' in keys:
+```bash
+git submodule status submodules/ViTPose submodules/multi-hmr
 ```
 
-改成：
+如果这两个子模块仍指向官方上游 URL，说明本地配置没有同步，执行：
 
-```python
-if 'expert' in key:
+```bash
+git submodule sync submodules/ViTPose submodules/multi-hmr
+git submodule update --init --recursive submodules/ViTPose submodules/multi-hmr
 ```
 
 ## 3. 安装 Conda 环境与依赖
@@ -203,5 +206,6 @@ conda run -n annyfit python <your_command.py>
 ## 8. Git 注意事项
 
 - 不要 `git add checkpoints/`。
-- 子模块内部补丁不应直接依赖本地脏工作区；用 `ai_install_guide/patches/` 里的 patch 复现。
-- 如果必须提交子模块修改，需要 fork ViTPose 并让顶层 repo 指向 fork 中可访问的 commit；否则其他环境无法获取该子模块 commit。
+- 不要在目标环境临时修改子模块来完成安装；需要长期保留的子模块改动应提交到对应 fork，并由顶层 repo 记录新的 submodule commit。
+- 顶层 repo 中的 `git add submodules/<name>` 只更新子模块指针，不会把子模块内部文件 diff 直接提交进顶层 repo。
+- 旧版 patch 流程已废弃；`ai_install_guide/patches/` 和 `apply_submodule_patches.sh` 只作为历史参考，不应在正常安装流程中执行。
