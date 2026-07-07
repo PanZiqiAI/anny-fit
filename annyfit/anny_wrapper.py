@@ -58,7 +58,8 @@ class Anny(torch.nn.Module):
         try:
             self.model = anny.create_fullbody_model(remove_unattached_vertices=False,
                                                     local_changes=True,
-                                                    pose_parameterization='local-bone-world',
+                                                    pose_parameterization='local-bone',
+                                                    bone_orientation='blender-rootidentity',
                                                     topology='smplx',
                                                     ).to(dtype=self.dtype)
         except TypeError:

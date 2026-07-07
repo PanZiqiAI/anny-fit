@@ -23,6 +23,10 @@ class _DummyLogger:
 class Annyfit:
     def __init__(self, cfg: DictConfig, device='cpu'):
         self.cfg = cfg
+        vis_cfg = self.cfg.get('vis', {})
+        egl_device_id = vis_cfg.get('egl_device_id') if vis_cfg is not None else None
+        if egl_device_id is not None:
+            os.environ['EGL_DEVICE_ID'] = str(egl_device_id)
         print("--- Configuration ---")
         print(OmegaConf.to_yaml(self.cfg))
         print("---------------------")
@@ -40,7 +44,8 @@ class Annyfit:
         try:
             anny_model = anny.create_fullbody_model(remove_unattached_vertices=False,
                                                     local_changes=True,
-                                                    pose_parameterization='local-bone-world')
+                                                    pose_parameterization='local-bone',
+                                                    bone_orientation='blender-rootidentity')
         except TypeError:
             anny_model = anny.create_fullbody_model(remove_unattached_vertices=False,
                                                     local_changes=True,
@@ -169,8 +174,12 @@ class Annyfit:
 
     def render_optimized_people(self, img_path: str, final_vertices: torch.Tensor, faces: torch.Tensor, camera_intrinsics: torch.Tensor, save_path: str):
         img = cv2.imread(img_path)
-        visualize_and_save(image=img, vertices=final_vertices, faces=faces, K=camera_intrinsics,
-                           output_path=save_path, distance=5.0, alpha=1.0, center_on_mesh=True, save_img=True)
+        try:
+            visualize_and_save(image=img, vertices=final_vertices, faces=faces, K=camera_intrinsics,
+                               output_path=save_path, distance=5.0, alpha=1.0, center_on_mesh=True, save_img=True)
+        except Exception as exc:
+            print(f"Warning: mesh rendering failed for {save_path}: {exc}")
+            cv2.imwrite(save_path, img)
 
     def optimize_image(self, img_prefix: str):
         print(f"Processing: {img_prefix}")

@@ -91,7 +91,11 @@ class AnnyfitStage(pl.LightningModule):
                 vis_img = visualize_points(vis_img, self.target.keypoints_2d[:, :, :2].clone().detach().cpu(), save_path, color=(0, 255, 0))
         except:
             print("Error visualizing keypoints.")
-        visualize_and_save(vis_img, vertices, self.faces, self.K, save_path)
+        try:
+            visualize_and_save(vis_img, vertices, self.faces, self.K, save_path)
+        except Exception as exc:
+            print(f"Warning: mesh rendering failed for {save_path}: {exc}")
+            cv2.imwrite(save_path, vis_img)
 
     def get_ignore_params(self, stage):
         ignore_params = []
