@@ -1,5 +1,4 @@
 # Anny-Fit
-
 Official code for **Anny-Fit: All-age Human Mesh Recovery** accepted at CVPR 2026 Findings \
 [Laura Bravo-Sánchez](https://laubravo.github.io), [Matthieu Armando](https://europe.naverlabs.com/people_user_naverlabs/matthieu-armando/), [Romain Brégier](https://rbregier.github.io), [Grégory Rogez](https://europe.naverlabs.com/people_user_naverlabs/gregory-rogez/), [Serena Yeung-Levy](https://marvl.stanford.edu/people.html), [Fabien Baradel](https://fabienbaradel.github.io)
 
@@ -18,6 +17,19 @@ Our method recovers multi-person 3D human meshes from all ages directly in camer
 - **2026/05/05** — Code released
 
 ---
+
+## 安装说明（从另一个安装好的环境迁移）
+只需要告诉 AI：
+```
+请阅读并严格按照 ai_install_guide/README.md 执行安装和验证。
+```
+然后在 AI 需要权重来源时，按 README 的提示给它一个路径即可：如果是另一台机器，请给出诸如 ip地址:/path_to_repo 或 user@ip地址:/path_to_repo 的格式；
+如果是本机，请给出诸如 /path_to_repo 的格式。
+
+不需要手动运行任何脚本。AI会自己执行。只需要在必要时提供：
+- 源 repo/checkpoints 路径；
+- 如果走局域网远程复制，可能需要 SSH 密码或确认 SSH 指纹；
+  - 如果 Conda/网络/权限需要授权，按提示允许
 
 ## Installation
 
